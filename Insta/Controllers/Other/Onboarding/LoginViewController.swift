@@ -7,11 +7,12 @@
 //
 
 import UIKit
+import SafariServices
 
 class LoginViewController: UIViewController {
     
     struct Constants {
-        static let cornerRadius: CGFloat = 0.0
+        static let cornerRadius: CGFloat = 10
     }
     
     private let usernameEmailField: UITextField = {
@@ -25,14 +26,16 @@ class LoginViewController: UIViewController {
         field.layer.masksToBounds = true
         field.layer.cornerRadius = Constants.cornerRadius
         field.backgroundColor = .secondarySystemBackground
-        return UITextField()
+        field.layer.borderWidth = 1.0
+        field.layer.borderColor = UIColor.secondaryLabel.cgColor
+        return field
     }()
     
     private let passwordField: UITextField = {
         let field = UITextField()
         field.isSecureTextEntry = true
         field.placeholder = "Password"
-        field.returnKeyType = .next
+        field.returnKeyType = .continue
         field.leftViewMode = .always
         field.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 10, height: 0))
         field.autocapitalizationType = .none
@@ -40,6 +43,8 @@ class LoginViewController: UIViewController {
         field.layer.masksToBounds = true
         field.layer.cornerRadius = Constants.cornerRadius
         field.backgroundColor = .secondarySystemBackground
+        field.layer.borderWidth = 1.0
+        field.layer.borderColor = UIColor.secondaryLabel.cgColor
         return field
     }()
     
@@ -48,17 +53,23 @@ class LoginViewController: UIViewController {
         button.setTitle("Log In", for: .normal)
         button.layer.masksToBounds = true
         button.layer.cornerRadius = Constants.cornerRadius
-        button.backgroundColor = .systemBlue
+        button.backgroundColor = UIColor(named: "deepGreen")
         button.setTitleColor(.white, for: .normal)
         return button
     }()
     
     private let termsButton: UIButton = {
-        return UIButton()
+        let button = UIButton()
+        button.setTitle("Terms of Service", for: .normal)
+        button.setTitleColor(.secondaryLabel, for: .normal)
+        return button
     }()
     
     private let privacyButton: UIButton = {
-        return UIButton()
+        let button = UIButton()
+        button.setTitle("Privacy Policy", for: .normal)
+        button.setTitleColor(.secondaryLabel, for: .normal)
+        return button
     }()
     
     private let createAccountButton: UIButton = {
@@ -71,24 +82,106 @@ class LoginViewController: UIViewController {
     private let headerView: UIView = {
         let header = UIView()
         header.clipsToBounds = true
-        header.backgroundColor = .red
+        let backgroundImageView = UIImageView(image: UIImage(named: "logo"))
+        header.addSubview(backgroundImageView)
+        header.backgroundColor = UIColor(named: "deepGreen")
         return header
     }()
+    
+    private let backButton: UIButton = {
+        let button = UIButton()
+        button.setImage(UIImage(systemName: "arrow.left"), for: .normal)
+        button.tintColor = .white
+        return button
+    }()
+    
+//    private let headerView: UIImageView = {
+//        let image = UIImageView()
+//        image.bounds = CGRect(x: 0, y: view.safeAreaInsets.top, width: view.width/2, height: view.width/2)
+//
+//        return image
+//    }()
 
     override func viewDidLoad() {
         super.viewDidLoad()
         addSubviews()
         view.backgroundColor = .systemBackground
+//        view.backgroundColor = UIColor(named: "deepGreen")
+        
+        usernameEmailField.delegate = self
+        passwordField.delegate = self
+        
+        loginButton.addTarget(self, action: #selector(didTapLoginButton), for: .touchUpInside)
+        createAccountButton.addTarget(self, action: #selector(didTapCreateAccountButton), for: .touchUpInside)
+        termsButton.addTarget(self, action: #selector(didTapTermsButton), for: .touchUpInside)
+        privacyButton.addTarget(self, action: #selector(didTapPrivacyButton), for: .touchUpInside)
+        backButton.addTarget(self, action: #selector(didTapBackButton), for: .touchUpInside)
     }
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         
         // assign frames
-        
         headerView.frame = CGRect(
-            x: 0, y: view.safeAreaInsets.top, width: view.width, height: view.height/3.0
+            x: 0,
+            y: 0,
+            width: view.width,
+            height: view.height/3 + 50
         )
+        
+        usernameEmailField.frame = CGRect(
+            x: 25,
+            y: headerView.bottom + 20,
+            width: view.width-50,
+            height: 52.0
+        )
+        
+        passwordField.frame = CGRect(
+            x: 25,
+            y: usernameEmailField.bottom + 10,
+            width: view.width-50,
+            height: 52.0
+        )
+        
+        loginButton.frame = CGRect(
+            x: 25,
+            y: passwordField.bottom + 10,
+            width: view.width-50,
+            height: 52.0
+        )
+        
+        createAccountButton.frame = CGRect(
+            x: 25,
+            y: loginButton.bottom + 10,
+            width: view.width-50,
+            height: 52.0
+        )
+        
+        termsButton.frame = CGRect(x: 10, y: view.height-view.safeAreaInsets.bottom-100, width: view.width-20, height: 50)
+        
+        privacyButton.frame = CGRect(x: 10, y: view.height-view.safeAreaInsets.bottom-50, width: view.width-20, height: 50)
+        
+        configureHeaderView()
+        
+        backButton.frame = CGRect(x: 20, y: view.safeAreaInsets.top+7, width: 20, height: 20)
+    }
+    
+    private func configureHeaderView() {
+        guard headerView.subviews.count == 1 else{
+            return
+        }
+        
+        guard let backgroundView = headerView.subviews.first else {
+            return
+        }
+        backgroundView.contentMode = .scaleAspectFit
+        backgroundView.frame = CGRect(
+            x: headerView.width/4,
+            y: view.safeAreaInsets.top - 10,
+            width: headerView.width/2,
+            height: headerView.height - view.safeAreaInsets.top
+        )
+        
     }
     
     private func addSubviews() {
@@ -99,14 +192,88 @@ class LoginViewController: UIViewController {
         view.addSubview(privacyButton)
         view.addSubview(headerView)
         view.addSubview(createAccountButton)
+        view.addSubview(backButton)
     }
     
-    @objc private func didTapLoginButton() {}
+    @objc private func didTapLoginButton() {
+        usernameEmailField.resignFirstResponder()
+        passwordField.resignFirstResponder()
+        
+        guard let usernameEmail = usernameEmailField.text, !usernameEmail.isEmpty,
+            let password = passwordField.text, !password.isEmpty, password.count >= 8 else {
+                return
+        }
+        
+        var username: String?
+        var email: String?
+        
+        // Login functionality
+        if usernameEmail.contains("@"), usernameEmail.contains(".") {
+            // email
+            email = usernameEmail
+        } else {
+            // username
+            username = usernameEmail
+        }
+        AuthManager.shared.loginUser(username: username, email: email, password: password)  { success in
+            DispatchQueue.main.async {
+                if success {
+                    //user logged in
+                    self.dismiss(animated: true, completion: nil)
+                }
+                else {
+                    // error occurred
+                    let alert = UIAlertController(title: "Log In Error",
+                                                  message: "We were unable to log you in.",
+                                                  preferredStyle: .alert)
+                    alert.addAction(UIAlertAction(title: "Dismiss",
+                                                  style: .cancel,
+                                                  handler: nil))
+                    self.present(alert, animated: true)
+                }
+            }
+        }
+        
+    }
     
-    @objc private func didTapTermsButton() {}
+    @objc private func didTapCreateAccountButton() {
+        let vc = RegistrationViewController()
+        vc.title = "Create Account"
+        present(UINavigationController(rootViewController: vc), animated: true)
+    }
     
-    @objc private func didTapPrivacyButton() {}
+    @objc private func didTapTermsButton() {
+        guard let url = URL(string: "https://ce3f927e-b3bd-4100-801e-475da8549c75.filesusr.com/ugd/1b5faf_bb8150fec85e4214a984491c4df73b6d.pdf") else {
+            return
+        }
+        let vc = SFSafariViewController(url: url)
+        present(vc, animated: true)
+    }
     
-    @objc private func didTapCreateAccountButton() {}
+    @objc private func didTapPrivacyButton() {
+        guard let url = URL(string: "https://ce3f927e-b3bd-4100-801e-475da8549c75.filesusr.com/ugd/1b5faf_8c6a245b790b418f9bebfa957536d816.pdf") else {
+            return
+        }
+        let vc = SFSafariViewController(url: url)
+        present(vc, animated: true)
+    }
+    
+    @objc private func didTapBackButton() {
+        let vc = HomeViewController()
+        present(vc, animated: true)
+//        view.backgroundColor = .red
+    }
 
+}
+
+extension LoginViewController: UITextFieldDelegate {
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        if textField == usernameEmailField {
+            passwordField.becomeFirstResponder()
+        }
+        else if textField == passwordField {
+            didTapLoginButton()
+        }
+        return true
+    }
 }
